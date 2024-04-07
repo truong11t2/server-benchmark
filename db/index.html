@@ -1,0 +1,18 @@
+<!-- countries/index.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Template & DB</title>
+</head>
+<body>
+    <h1>List of Countries</h1>
+    <table>
+        {{range .Countries}}
+        <tr>
+            <td>{{ .Id }}</td>
+            <td>{{ .Name }}</td>
+        </tr>
+        {{end}}
+    </table>
+</body>
+</html>
