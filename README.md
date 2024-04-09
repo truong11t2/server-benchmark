@@ -1,17 +1,17 @@
 ## INTRODUCTION
 
-The purpose of this work is to get the overview of concurrency handling among Apache, NGINX and Go web servers.
-This performance benchmarking is based on [C10K problem](https://en.wikipedia.org/wiki/C10k_problem).
+The purpose of this work is to get the overview of handling concurrent requests with Apache, NGINX and Go web servers.
+Along with that is to have the perfomance insight of Go server with the responses of static file, template and database.
+This performance benchmarking is motivated by [C10K problem](https://en.wikipedia.org/wiki/C10k_problem).
 
 ## HOW TO
-10000 requests are sent to servers at localhost concurrently and the completion time is measured for those requests.
-The servers returns the same amount of data. In this scope of work, the return data is the id and the name of 249 countries with the size around 23kB/request.
+10000 requests are sent to localhost servers concurrently and the completion time is measured for each of requests.
+The servers returns the same amount of data. In this scope of work, the return data is the id and the name of 249 countries with the size around 23kB per request.
 
-For `Apache`, `NGINX` and `Go`, the requests are sent to `/static` to get the content of static file on server
+For Apache, NGINX and Go, the requests are sent to `/static` to get the content of static file on server.
 
-For `Go` the more endpoints are created including:
+For Go server, the additional endpoints are created including:
 
--  `/static`: as mentioned above
 -  `/template`: backend takes data, generates template and send to client
 -  `/db`: backend gets data from PostgreSQL database, generates template and send to client
 
@@ -21,7 +21,7 @@ For `Go` the more endpoints are created including:
   
   ```ab -n 10500 -c 10000 -g output.csv url```
   
-  where `output.csv` stores the latency information for each request and `url` is the endpoint (http://localhost)
+  where `-c 10000` is the number of concurrent requests, `output.csv` stores the latency information for each request and `url` is the endpoint.
 - [Gnuplot](http://www.gnuplot.info/): takes the data in `csv` files and visualizes latency in graphs. Follow the below commands to visualize data.
 
 ```
@@ -43,17 +43,22 @@ plot '/path/to/file1.csv' using 9 smooth sbezier with lines title"apache", \
 
 ![static](https://github.com/truong11t2/server-benchmark/blob/main/result/static-apache-go-nginx.png)
 
-Apache sever shows a great performance with some of requests but it takes too long for some requests. At the end, it cannot solve C10K problem.
+Apache sever shows a great performance with some of requests but it takes too long for some requests.
+On the otherhand, NGINX and Go have a fast and stable performance for requests. Requests are treated equally.
 
-On the otherhand, NGINX and Go have a stable performance for requests.
+The Apache web server uses a process-driven architecture that creates a new thread for each new request. 
+The long and short of it is that every connection keeps a thread occupied for the duration of the request. 
+Each thread has a certain amount of memory overhead associated with it, and as you scale up the number of threads, the amount of overhead increases until you run out of space.
 
-The difference 
+NGINX and Go are based on non-blocking event-driven architecture that make them as an ideal solution for multiple requests. 
 
 ### GO server
 
 ![go-result](https://github.com/truong11t2/server-benchmark/blob/main/result/static-template-db-go.png)
 
-Only with Go server with different approaches including `static`, `template` and `database`. The server can easily handle 10000 concurrent requests
+Only with Go server with different approaches including `static`, `template` and `database`. The server can easily handle 10000 concurrent requests.
+However, there is a notice that if the concurrent requests require data from database without caching implementation, the Go server CANNOT handle. Because
+database connection is expensive and not suitable for concurrent requests, caching or distributed db are required for such requests.
 
 #### Static
 ```
